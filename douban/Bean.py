@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-class URLextracter(object):
+class UrlExtracter(object):
     """
     初始时候指定默认为本地的Redis数据库保存 URL数据
     如果需要连接远程的数据库
@@ -47,7 +47,7 @@ class URLextracter(object):
         self.out=str(key) + '-output'
         self.redis.sadd(self.out,v)
         return v
-class DMovieEtl(URLextracter):
+class DMovieEtl(UrlExtracter):
     step1='dbmv-step1'
     step2='dbmv-step2'
     start_page='https://movie.douban.com/tag'
@@ -118,3 +118,86 @@ class DMovieEtl(URLextracter):
         return nextpage
     def run(self):
         pass
+
+class PageExtracter(object):
+    """
+        默认使用mongoDB来保存 通过URL解析到到页面
+
+    """
+    step2='dbmv-step2'
+    from pymongo import MongoClient
+    import requests as paw
+    from bs4 import BeautifulSoup as bp
+    import os
+    import re
+    def __init__(self,h='localhost',p='6379',pwd=''):
+        self.host=h
+
+        #url = 'mongodb://' + 'tristan' + ':' + 'sengehahaha' + '@' + 'zp.tristan.pub' + ':' + '10011' +'/'+ 'douban'
+
+        self.client = self.MongoClient(self.host,10011)
+
+        self.db = self.client.douban
+
+        self.p=p
+        self.pwd=pwd
+        try:
+            from redis import Redis
+        except:
+            print "Exception: Redis dev not find"
+        self.redis=Redis(host=self.host,port=self.p,db=0,password=self.pwd)
+
+    def getPage(self,url):
+        print(url)
+        response=self.paw.get(url)
+        mv=dict()
+        if(response.status_code!=200):
+            print(response.status_code)
+            print("Exit from Exception")
+            exit()
+        try:
+            soup_page=self.bp(response.text,'lxml')
+            name=soup_page.find('span',property="v:itemreviewed").text
+            year=soup_page.find('span',class_="year").text
+            mv_info=soup_page.find('div',class_="indent clearfix")
+            mv_img=mv_info.find('img',src=self.re.compile('^https://.*.doubanio.com/'))
+            rating_num=soup_page.find('div',class_='rating_self clearfix').find('strong',class_='ll rating_num')
+            mv_id=self.re.search(r'[0-9].*[0-9]',url).group(0)
+            mv['name']=name
+            mv['year']=year
+            mv['img']=mv_img['src']
+            print(rating_num.text)
+            mv['rating']=float(rating_num.text)  #new modify to int for pick
+            #mv['info']=mv_info
+            mv['id']=mv_id
+        except Exception,e:
+            print e
+            print(url)
+            print("Raise a Exception")
+            mv=None
+
+        return mv
+    def getRset(self,key):
+        v=self.redis.spop(key)
+        self.out=str(key) + '-output'
+        self.redis.sadd(self.out,v)
+        return v
+    def run(self):
+
+        url=self.getRset(self.step2)
+        while(url is not None):
+            mv=self.getPage(url)
+            if(mv is not None):
+                a=self.db.mv_test1.find_one({"id":mv['id']})
+                if(a is None):
+                    status=self.db.mv_test1.insert_one(mv)
+                    print(type(status))
+                    print(status)
+                    print("insert success")
+                else:
+                    print("Failed,id exist")
+
+            else:
+                print(url)
+                print '解析失败'
+            url=self.getRset(self.step2)
