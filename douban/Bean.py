@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 class UrlExtracter(object):
     """
     初始时候指定默认为本地的Redis数据库保存 URL数据
@@ -200,4 +201,5 @@ class PageExtracter(object):
             else:
                 print(url)
                 print '解析失败'
+            time.sleep(30)
             url=self.getRset(self.step2)

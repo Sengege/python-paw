@@ -1,0 +1,26 @@
+<html>
+<head>
+    <title>douban movies</title>
+</head>
+<body>
+<div id='top'>
+  <h3>Hi  {{username}} 你好！ 欢迎回来！ <a href="/logout"> 登出系统</a>
+</div>
+<table>
+{%for mv in mvlist%}
+<td style="padding:50px;">
+<br/>
+
+电影名：{{ mv.name }}
+<br/>
+年份：{{ mv.year }}
+<br/>
+评分：{{mv.rating}}
+<br/>
+<a href='https://www.baidu.com/s?wd={{mv.name}}'>
+<img src='{{mv.img}}'></a>
+
+</td>
+{% endfor %}
+</body>
+</html>

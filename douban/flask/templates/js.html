@@ -1,0 +1,32 @@
+<html>
+<head>
+<title>js loader test</title>
+<script type="text/javascript" src="/static/jquery.js"></script>
+</head>
+
+<body>
+  this is html content!
+  Hello html!
+  <script>
+  var rs;
+  $(document).ready(function(){
+
+    $.get('/word',function(data,status){
+      //alert(data);
+      //alert(status);
+      rs=JSON.parse(data);
+      //alert(rs['data']['items'][0]['content']);
+      rs=rs['data']['items'];
+      for (a in rs){
+         $("#word").append("<img src='"+rs[a]['photo']+"''>"+rs[a]['content']+"<br/>");
+
+       }
+
+  });
+
+});
+</script>
+<p id="word"></p>
+
+</body>
+</html>
