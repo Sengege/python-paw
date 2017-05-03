@@ -6,6 +6,13 @@ import re
 import os
 from redis import Redis
 r=Redis()
+
+
+#第一步得到了豆瓣电影标签页的所有地址
+#然后通过标签来抓取电影地址
+#
+#
+#
 #requests 用来处理http请求
 #bs4用来进行页面的解析
 # 构造 Request headers
@@ -85,5 +92,7 @@ def get_tags_url_toRedis():
 """
 if __name__ == "__main__":
     print ('This is main of module "step1.py"')
-    get_tags_url_toRedis()
+    a=get_tags_url_toRedis()
+    print a
+
 ###结果直接保存在redis中  进行持久化

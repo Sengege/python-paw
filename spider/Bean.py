@@ -153,7 +153,11 @@ class PageExtracter(object):
         mv=dict()
         if(response.status_code!=200):
             print(response.status_code)
-            print("Exit from Exception")
+            if(response.status_code==403):
+                print("requests is too frequent  403!Fobidden")
+                self.saveRset('fail-from-403-douban',url)
+                self.saveRset(self.step2,url)
+            print("Exit from Exception at getPage function")
             exit()
         try:
             soup_page=self.bp(response.text,'lxml')
@@ -200,4 +204,7 @@ class PageExtracter(object):
             else:
                 print(url)
                 print '解析失败'
+                self.saveRset('etl-fail-douban',url)
             url=self.getRset(self.step2)
+    def saveRset(self,key,value):
+            self.redis.sadd(key,value)
