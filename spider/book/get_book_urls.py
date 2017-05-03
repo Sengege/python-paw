@@ -2,41 +2,42 @@
 # encoding: utf-8
 
 """
-@version: python2.7
-@author: ‘sen-ele‘
-@license: Apache Licence 
-@file: get_movie_urls
-@time: 18/4/17 AM11:08
-"""
 
+"""
+import requests as paw
 from bs4 import BeautifulSoup
 import re
+from redis import Redis
 import time
+def get_now():
+    now=time.strftime('%Y-%m-%d %H:%M:%S',time.localtime())
+    return now
 
+r=Redis()
 
-
-from spider import paw,redisConn
-
-
-key="movie_tags"
-save_key="movie_urls"
+s = paw.session()
+s.keep_alive = False
+key="book_tags"
+save_key="book_urls"
 
 def get_onepage_urls(tag):
     response = paw.get(tag)
     if (response.status_code != 200):
         print(response.status_code)
-        redisConn.lpush(key,tag)
+        print get_now()
+        r.lpush(key,tag)
         raise Exception("Exception throws")
 
     soup_page = BeautifulSoup(response.text, 'lxml')
-    raw_urls = soup_page.find_all('a', href=re.compile('^https://movie.douban.com/subject/[0-9].*[0-9]/$'))
+    raw_urls = soup_page.find_all('a', href=re.compile('^https://book.douban.com/subject/[0-9].*[0-9]/$'))
 
     for temp in raw_urls:
-        redisConn.sadd(save_key, temp['href'])
+        r.sadd(save_key, temp['href'])
 
     try:
         raw_total = soup_page.find('span', class_='thispage')
-        nextpage = raw_total.find_next('a', href=re.compile('^https://movie.douban.com/tag/.*type=T$'))['href']
+        nextpage = raw_total.find_next('a', href=re.compile('^/tag/.*type=T$'))['href']
+        nextpage ="https://book.douban.com"+nextpage
     except:
         nextpage = 'EOF'
     return nextpage
@@ -49,7 +50,7 @@ def get_allpage_urls(tag):
         if "EOF"==nextpage:
             break
 
-while redisConn.scard(key):
-    next_tag = redisConn.spop(key)
+while r.scard(key):
+    next_tag = r.spop(key)
     print next_tag
     get_allpage_urls(next_tag)
